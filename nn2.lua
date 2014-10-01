@@ -87,4 +87,12 @@ local input = {
 local o = calculateNetwork(input, nn)
 dump(o)
 
+function error(o, expectedOutput)
+	local e = 0
+	for i=1,#o do
+		e = e + math.abs(o[i]-expectedOutput[i])
+	end
+	return e
+end
+
 
