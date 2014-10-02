@@ -221,20 +221,38 @@ function copyGen(g1,g2)
 	return g2
 end
 
+function crossover(g1,g2)
+	if random()>CROSS_OVER_RATE then
+		local pos = random(#g2)
+		for i=pos, #g2 do
+			local t = g2[i]
+			g2[i] = g1[i]
+			g1[i] = t
+		end
+	end
+end
+
+function mutate(g)
+	for i=1,#g do
+		if random() > MUTATION_RATE then
+			g[i]=g[i] + random()
+		end
+end
 
 function newGen(genoms,fitnessTable,newGen)
-	newGen = newGen or {}
-	local sum = fitnessSum(fitnessTable)
-	local nexIdx=1
-	for i=1,math.round(genoms/2) do
-		local maleIdx   = grabGenomForMate(fitnessTable, sum)
-		local femaleIdx = grabGenomForMate(fitnessTable, sum)
-		local male   = copyGen(genoms[maleIdx],  newGen[nexIdx]  )
-		local female = copyGen(genoms[femaleIdx],newGen[nexIdx+1])
-		--TODO:crossover + mutation
-		newGen[nexIdx]=male
-		newGen[nexIdx+1]=female
-		nexIdx = nexIdx + 2
+	newGen       = newGen or {}
+	local sum    = fitnessSum(fitnessTable)
+	local nexIdx = 1
+	for i = 1, math.round(genoms/2) do
+		local maleIdx    = grabGenomForMate(fitnessTable, sum)
+		local femaleIdx  = grabGenomForMate(fitnessTable, sum)
+		local male       = copyGen(genoms[maleIdx],  newGen[nexIdx]  )
+		local female     = copyGen(genoms[femaleIdx],newGen[nexIdx+1])
+		crossover(male,female)
+		--TODO:mutation
+		newGen[nexIdx]   = male
+		newGen[nexIdx+1] = female
+		nexIdx           = nexIdx + 2
 	end
 	return newGen
 end
