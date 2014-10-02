@@ -1,3 +1,4 @@
+-- all copyrights (c) 2014 by Jean Jonethal
 -- neural network implementation
 
 local random = math.random
