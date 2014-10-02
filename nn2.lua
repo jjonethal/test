@@ -154,6 +154,9 @@ function fitness(nn,input,expectedOutput)
 	return 1/e
 end
 
+--- create genom set for neural net. initialize genome with random values
+-- @param nn the neural network template
+-- @return the genome set for neural net
 function initGenoms(nn)
 	local genoms={}
 	local template=getGenom(nn)
@@ -168,6 +171,11 @@ function initGenoms(nn)
 	return genoms
 end
 
+--- calculate fitness for all genoms in the population
+-- @param genoms the table with genoms of the population
+-- @param nn the neural network template
+-- @param input input to neural network
+-- @param expectedOutput the 
 function generationFittness(genoms,nn,input,expectedOutput,fitnessTable)
 	fitnessTable = fitnessTable or {}
 	local numGenoms=#genoms
