@@ -3,10 +3,10 @@
 -- see http://www.ai-junkie.com/ann/evolved/nnt1.html
 
 local random = math.random
-BIAS            = -1       -- scaling / shifting for neuron output
-CROSS_OVER_RATE = 0.7      -- genetic solver crossover rate
-MUTATION_RATE   = 0.03     -- mutation rate
-
+BIAS                 = -1       -- scaling / shifting for neuron output
+CROSS_OVER_RATE      = 0.7      -- genetic solver crossover rate
+MUTATION_RATE        = 0.03     -- mutation rate
+MUTATION_DISTURBANCE = 0.001    -- mutation disturbance
 --- generate neuron with numInput + 1 weigths activation threshold
 -- @param numInputs number of inputs to neuron
 -- return neuron with randomly distributed weights
@@ -235,8 +235,9 @@ end
 function mutate(g)
 	for i=1,#g do
 		if random() > MUTATION_RATE then
-			g[i]=g[i] + random()
+			g[i] = g[i] + (random() - 0.5) * MUTATION_DISTURBANCE
 		end
+	end
 end
 
 function newGen(genoms,fitnessTable,newGen)
@@ -249,7 +250,8 @@ function newGen(genoms,fitnessTable,newGen)
 		local male       = copyGen(genoms[maleIdx],  newGen[nexIdx]  )
 		local female     = copyGen(genoms[femaleIdx],newGen[nexIdx+1])
 		crossover(male,female)
-		--TODO:mutation
+		mutate(male)
+		mutate(female)
 		newGen[nexIdx]   = male
 		newGen[nexIdx+1] = female
 		nexIdx           = nexIdx + 2
