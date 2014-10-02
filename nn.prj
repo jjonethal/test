@@ -4,5 +4,6 @@
         <File name="nn.lua" />
         <File name="nn2.lua" />
         <File name="README.md" />
+        <File name="simul.lua" />
     </Project>
 </NotepadPlus>
