@@ -192,6 +192,7 @@ function newGen(genoms,fitnessTable,newGen)
 		local femaleIdx = grabGenomForMate(fitnessTable, sum)
 		local male   = copyGen(genoms[maleIdx],  newGen[nexIdx]  )
 		local female = copyGen(genoms[femaleIdx],newGen[nexIdx+1])
+		--TODO:crossover + mutation
 		newGen[nexIdx]=male
 		newGen[nexIdx+1]=female
 		nexIdx = nexIdx + 2
