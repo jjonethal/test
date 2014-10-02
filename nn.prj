@@ -1,0 +1,8 @@
+<NotepadPlus>
+    <Project name="nn">
+        <File name="LICENSE" />
+        <File name="nn.lua" />
+        <File name="nn2.lua" />
+        <File name="README.md" />
+    </Project>
+</NotepadPlus>
