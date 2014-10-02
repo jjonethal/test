@@ -1,18 +1,26 @@
 -- all copyrights (c) 2014 by Jean Jonethal
 -- neural network implementation
+-- see http://www.ai-junkie.com/ann/evolved/nnt1.html
 
 local random = math.random
-BIAS = -1
+BIAS            = -1       -- scaling / shifting for neuron output
+CROSS_OVER_RATE = 0.7      -- genetic solver crossover rate
+MUTATION_RATE   = 0.03     -- mutation rate
 
--- neuron with numInput weigth + 1 activation threshold
+--- generate neuron with numInput + 1 weigths activation threshold
+-- @param numInputs number of inputs to neuron
+-- return neuron with randomly distributed weights
 function generateNeuron(numInputs)
 	local neuron = {}
 	for i = 1, numInputs + 1 do
-		neuron[i] = random() * 2 - 1
+		neuron[i] = random()
 	end
 	return neuron
 end
 
+--- generate one neuron layer
+-- @param numNeurons number of neurons in layer
+-- @param numInputs  number of inputs/synapses to neurons
 function generateLayer(numNeurons,numInputs)
 	local layer = {}
 	for i=1, numNeurons do
@@ -23,7 +31,12 @@ end
 
 
 --- generate neural network
--- layout -- 1 number of inputs
+-- @param layout table containing number of inputs { input layer1 ... }
+-- @return neural net with layout and randomly distributed weights
+-- layout eg. { 35 35 10 } :
+-- 35 inputs
+-- 35 neurons on 1st layer
+-- 10 neurons on last layer
 function generateNet(layout)
 	local network = {}
 	for i=2,#layout do
@@ -32,12 +45,15 @@ function generateNet(layout)
 	return network
 end
 
--- sigmoid activation mapping
+-- sigmoid activation function
 function sigmoid(a)
 	return 1.0/(1.0 + math.exp(-a))
 end
 
--- calculate the activation of the neuron
+--- calculate the activation of the neuron
+-- @param input the input array {i1 ... iN}
+-- @param neuron then neuron weights { w1 ... wN+1 } wN+1 is the activation bias of the neuron
+-- @return the activation value for the neuron
 function calculateActivation(input, neuron)
 	local activation = 0
 	for i = 1, #input do
@@ -46,16 +62,23 @@ function calculateActivation(input, neuron)
 	activation = activation + BIAS * neuron[#neuron]
 	return sigmoid(activation)
 end
-
-function calculateLayer(input, layer)
-	local output={}
+--- calculate the activation values for a complete neuron layer
+-- @param input the input vector of the layer
+-- @param layer the table with neurons. each neuron must have 
+function calculateLayer(input, layer, output)
+	output = output or {}
 	for i = 1, #layer do
 		local neuron = layer[i]
 		output[i] = calculateActivation(input, neuron)
 	end
+	output[#layer + 1] = nil
 	return output
 end
 
+--- calculate nn answer from input
+-- @param input input vector
+-- @param network the neural network to calculate answer from
+-- @return output vector fom neural network
 function calculateNetwork(input, network)
 	-- print("calculateNetwork",input,network)
 	for i = 1, #network do
@@ -74,7 +97,9 @@ function dump(t)
 	print(table.concat(ss," "))
 end
 
--- extract genom from neural net
+--- extract the genom from neural net
+-- @param nn the neural net to extract genom from
+-- @return the genom of neural net thus all weights
 function getGenom(nn)
 	local gen = {}
 	for k=1,#nn do
@@ -89,7 +114,10 @@ function getGenom(nn)
 	return gen
 end
 
--- program genom to neural net
+--- program genom to neural net
+-- @param nn the neural net to be modified
+-- @gen the weight data to be programmed into the neural net
+-- @return nothing
 function putGenom(nn,gen)
 	local g=1
 	for k=1,#nn do
@@ -103,7 +131,10 @@ function putGenom(nn,gen)
 	end
 end
 
-
+--- function to calculate absolute difference between two vectors
+-- @param output the actual result
+-- @param expectedOutput the expected result
+-- @return the absolute error
 function error(output, expectedOutput)
 	local e = 0
 	for i=1,#output do
@@ -112,6 +143,11 @@ function error(output, expectedOutput)
 	return e
 end
 
+--- calculate fittness of a neural net to expected output
+-- the higher the value, the better the network performs
+-- @param nn the network to be checked
+-- @param input the inputvector to neural net
+-- @param expectedOutput the expected output to be compared with output from neural net
 function fitness(nn,input,expectedOutput)
 	local output = calculateNetwork(input, nn)
 	local e = error(output, expectedOutput)
@@ -184,6 +220,8 @@ function copyGen(g1,g2)
 	g2[#g1+1]=nil
 	return g2
 end
+
+
 function newGen(genoms,fitnessTable,newGen)
 	newGen = newGen or {}
 	local sum = fitnessSum(fitnessTable)
@@ -202,7 +240,8 @@ function newGen(genoms,fitnessTable,newGen)
 end
 
 local nn = generateNet{35,35,10}
-local inputData = {
+
+local input_1a={
 	0,0,0,0,1,
 	0,0,0,1,1,
 	0,0,1,0,1,
@@ -211,6 +250,19 @@ local inputData = {
 	0,0,0,0,1,
 	0,0,0,0,0,
 }
+
+local input_1b={
+	0,0,0,1,0,
+	0,0,1,1,0,
+	0,1,0,1,0,
+	0,0,0,1,0,
+	0,0,0,1,0,
+	0,0,0,1,0,
+	0,0,0,0,0,
+}
+
+
+local inputData = input_1a
 
 
 local expectedOutput = {0,1,0,0,0,0,0,0,0,0}
