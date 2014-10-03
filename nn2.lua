@@ -186,6 +186,10 @@ function generationFittness(genoms,nn,input,expectedOutput,fitnessTable)
 	return fitnessTable
 end
 
+
+--- some statistics check for min/max
+-- @param fitnessTable the table with values to be checked
+-- @return max, idx of max, min, idx of min
 function getBestFitness(fitnessTable)
 	local min,max=fitnessTable[1],fitnessTable[1]
 	local minIdx,maxIdx=1
@@ -197,7 +201,10 @@ function getBestFitness(fitnessTable)
 	return max,maxIdx,min,minIdx
 end
 
-function fitnessSum(fitnessTable)
+--- summ all values together
+-- @param fitnessTable
+-- @return summ off all values
+function summ(fitnessTable)
 	local s=0
 	for i=1,#fitnessTable do
 		s=s+fitnessTable[i]
@@ -206,7 +213,7 @@ function fitnessSum(fitnessTable)
 end
 
 function grabGenomForMate(fitnessTable, sum)
-	sum=sum or fitnessSum(fitnessTable)
+	sum=sum or summ(fitnessTable)
 	local rand = random()*sum
 	local idx=1
 	local s=0
