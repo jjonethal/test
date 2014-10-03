@@ -188,8 +188,8 @@ end
 
 
 --- some statistics check for min/max
--- @param fitnessTable the table with values to be checked
--- @return max, idx of max, min, idx of min
+--  @param fitnessTable the table with values to be checked
+--  @return max, idx of max, min, idx of min
 function getBestFitness(fitnessTable)
 	local min,max=fitnessTable[1],fitnessTable[1]
 	local minIdx,maxIdx=1
@@ -202,8 +202,8 @@ function getBestFitness(fitnessTable)
 end
 
 --- summ all values together
--- @param fitnessTable
--- @return summ off all values
+--  @param fitnessTable
+--  @return summ off all values
 function summ(fitnessTable)
 	local s=0
 	for i=1,#fitnessTable do
@@ -212,6 +212,9 @@ function summ(fitnessTable)
 	return s
 end
 
+--- getting index for random genom for mating probability depends on fitness
+--  @param fitnessTable table containing fitness values of all genoms
+--  @param sum precomputed sum of all fitness values
 function grabGenomForMate(fitnessTable, sum)
 	sum=sum or summ(fitnessTable)
 	local rand = random()*sum
@@ -227,15 +230,22 @@ function grabGenomForMate(fitnessTable, sum)
 	return idx
 end
 
-function copyGen(g1,g2)
-	g2 = g2 or {}
-	for i=1,#g1 do
-		g2[i]=g1[i]
+--- copy vector 1 to vector 2 reusing vector 2
+--  @param v1 source vector to be copied
+--  @param v2 target vector to be copied over
+--  @return reference to target vector 
+function copyVector(v1,v2)
+	v2 = v2 or {}
+	for i=1,#v1 do
+		v2[i] = v1[i]
 	end
-	g2[#g1+1]=nil
-	return g2
+	v2[#v1+1]=nil
+	return v2
 end
 
+--- cross over to genes depending on cross over rate
+--  @param g1 first gene to be mutated
+--  @param g2 second gene to be mutated
 function crossover(g1,g2)
 	if random()>CROSS_OVER_RATE then
 		local pos = random(#g2)
@@ -262,8 +272,8 @@ function newGen(genoms,fitnessTable,newGen)
 	for i = 1, math.round(genoms/2) do
 		local maleIdx    = grabGenomForMate(fitnessTable, sum)
 		local femaleIdx  = grabGenomForMate(fitnessTable, sum)
-		local male       = copyGen(genoms[maleIdx],  newGen[nexIdx]  )
-		local female     = copyGen(genoms[femaleIdx],newGen[nexIdx+1])
+		local male       = copyVector(genoms[maleIdx],  newGen[nexIdx]  )
+		local female     = copyVector(genoms[femaleIdx],newGen[nexIdx+1])
 		crossover(male,female)
 		mutate(male)
 		mutate(female)
