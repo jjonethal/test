@@ -257,9 +257,10 @@ function crossover(g1,g2)
 	end
 end
 
+--- mutate a genom table
 function mutate(g)
 	for i=1,#g do
-		if random() > MUTATION_RATE then
+		if random() < MUTATION_RATE then
 			g[i] = g[i] + (random() - 0.5) * MUTATION_DISTURBANCE
 		end
 	end
