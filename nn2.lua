@@ -172,10 +172,10 @@ function initGenoms(nn)
 end
 
 --- calculate fitness for all genoms in the population
--- @param genoms the table with genoms of the population
--- @param nn the neural network template
--- @param input input to neural network
--- @param expectedOutput the 
+--  @param genoms the table with genoms of the population
+--  @param nn the neural network template
+--  @param input input to neural network
+--  @param expectedOutput the 
 function generationFittness(genoms,nn,input,expectedOutput,fitnessTable)
 	fitnessTable = fitnessTable or {}
 	local numGenoms=#genoms
@@ -220,7 +220,7 @@ function grabGenomForMate(fitnessTable, sum)
 	local rand = random()*sum
 	local idx=1
 	local s=0
-	for i=1,fitnessTable do
+	for i=1,#fitnessTable do
 		s = s + fitnessTable[i]
 		if(rand<s) then
 			idx = i
@@ -258,6 +258,7 @@ function crossover(g1,g2)
 end
 
 --- mutate a genom table
+--  @param g the genom table to be mutated
 function mutate(g)
 	for i=1,#g do
 		if random() < MUTATION_RATE then
@@ -266,11 +267,17 @@ function mutate(g)
 	end
 end
 
-function newGen(genoms,fitnessTable,newGen)
+--- create a next generation
+--  @param genoms the genomes of the population
+--  @param fitnessTable contains all fitness values of the population
+--  @param newGen the table that will contain the genoms of new generation
+--  @return the new table
+
+function nextGen(genoms, fitnessTable, newGen)
 	newGen       = newGen or {}
-	local sum    = fitnessSum(fitnessTable)
+	local sum    = summ(fitnessTable)
 	local nexIdx = 1
-	for i = 1, math.round(genoms/2) do
+	for i = 1, math.floor(#genoms/2.0 + 0.5) do
 		local maleIdx    = grabGenomForMate(fitnessTable, sum)
 		local femaleIdx  = grabGenomForMate(fitnessTable, sum)
 		local male       = copyVector(genoms[maleIdx],  newGen[nexIdx]  )
@@ -284,6 +291,35 @@ function newGen(genoms,fitnessTable,newGen)
 	end
 	return newGen
 end
+
+function dumpOutput(o)
+
+function evolution(trainingData, nn, genoms, newGen)
+	local inputData      = trainingData[1]
+	local expectedOutput = trainingData[2]
+	local fitnessTable   = generationFittness(genoms,nn,inputData,expectedOutput,fitnessTable)
+	local max,maxIdx,min,minIdx = getBestFitness(fitnessTable)
+	putGenom(nn,newGen)
+	local output = calculateNetwork(inputData, nn)
+	print(string.format("%9.3f %4d %9.3f %4d",max or 0,maxIdx or 0,min or 0,minIdx or 0))
+	newGen = nextGen(genoms, fitnessTable, newGen)
+	return newGen
+end
+
+function simulateNN(trainingData,layout)
+	local nn = generateNet(layout)
+	local inputData      = trainingData[1]
+	local expectedOutput = trainingData[2]
+	local genoms = initGenoms(nn)
+	local newGen
+	while(true) do
+		newGen = evolution(trainingData, nn, genoms, newGen)
+		local oldgen = genoms
+		genoms = newGen
+		newGen = oldgen
+	end
+end
+
 
 local nn = generateNet{35,35,10}
 
@@ -307,6 +343,10 @@ local input_1b={
 	0,0,0,0,0,
 }
 
+local traningVector={
+	{ input_1a, {0,1,0,0,0,0,0,0,0,0} },
+	{ input_1b, {0,1,0,0,0,0,0,0,0,0} },
+}
 
 local inputData = input_1a
 
@@ -319,4 +359,6 @@ local genoms = initGenoms(nn)
 print("#genoms",#genoms)
 local fitnessTable = generationFittness(genoms,nn,inputData,expectedOutput,fitnessTable)
 print("getBestFitness",getBestFitness(fitnessTable))
-print("fitnessSum(fitnessTable)",fitnessSum(fitnessTable))
+print("summ(fitnessTable)",summ(fitnessTable))
+local layout = {35,35,10}
+simulateNN(traningVector[1],layout)
