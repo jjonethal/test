@@ -140,6 +140,7 @@ function error(output, expectedOutput)
 	for i=1,#output do
 		e = e + math.abs(output[i]-expectedOutput[i])
 	end
+	print("error",e)
 	return e
 end
 
@@ -192,7 +193,7 @@ end
 --  @return max, idx of max, min, idx of min
 function getBestFitness(fitnessTable)
 	local min,max=fitnessTable[1],fitnessTable[1]
-	local minIdx,maxIdx=1
+	local minIdx,maxIdx=1,1
 	for i=1,#fitnessTable do
 		local f=fitnessTable[i]
 		if min > f then min = f minIdx=i end
@@ -280,6 +281,7 @@ function nextGen(genoms, fitnessTable, newGen)
 	for i = 1, math.floor(#genoms/2.0 + 0.5) do
 		local maleIdx    = grabGenomForMate(fitnessTable, sum)
 		local femaleIdx  = grabGenomForMate(fitnessTable, sum)
+--		print("nextGen",maleIdx, femaleIdx)
 		local male       = copyVector(genoms[maleIdx],  newGen[nexIdx]  )
 		local female     = copyVector(genoms[femaleIdx],newGen[nexIdx+1])
 		crossover(male,female)
@@ -293,15 +295,37 @@ function nextGen(genoms, fitnessTable, newGen)
 end
 
 function dumpOutput(o)
+	local t = {}
+	for i,v in ipairs(o) do
+		t[i]=string.format("v%02d %4.3f",i,v)
+	end
+	return(table.concat(t," "))
+end
+
+generation = 0
+
+function printGenom(genoms)
+	for i,g in ipairs(genoms) do
+		io.write(string.format("\nG%03d :",i))
+		for j,v in ipairs(g) do 
+			io.write(string.format("%5.3f ",v))
+		end
+	end
+	io.write("\n")
+end
+
+
 
 function evolution(trainingData, nn, genoms, newGen)
+	generation = generation + 1
 	local inputData      = trainingData[1]
 	local expectedOutput = trainingData[2]
-	local fitnessTable   = generationFittness(genoms,nn,inputData,expectedOutput,fitnessTable)
+	local fitnessTable   = generationFittness(genoms,nn,inputData,expectedOutput)
+	print("fitnessTable",table.concat(fitnessTable," "))
 	local max,maxIdx,min,minIdx = getBestFitness(fitnessTable)
-	putGenom(nn,newGen)
+	putGenom(nn,genoms[maxIdx])
 	local output = calculateNetwork(inputData, nn)
-	print(string.format("%9.3f %4d %9.3f %4d",max or 0,maxIdx or 0,min or 0,minIdx or 0))
+	print(string.format("%5d %9.3f %4d %9.3f %4d",generation, max or 0,maxIdx or 0,min or 0,minIdx or 0),dumpOutput(output))
 	newGen = nextGen(genoms, fitnessTable, newGen)
 	return newGen
 end
@@ -311,8 +335,9 @@ function simulateNN(trainingData,layout)
 	local inputData      = trainingData[1]
 	local expectedOutput = trainingData[2]
 	local genoms = initGenoms(nn)
-	local newGen
+	local newGen = nil
 	while(true) do
+		printGenom(genoms)
 		newGen = evolution(trainingData, nn, genoms, newGen)
 		local oldgen = genoms
 		genoms = newGen
@@ -360,5 +385,16 @@ print("#genoms",#genoms)
 local fitnessTable = generationFittness(genoms,nn,inputData,expectedOutput,fitnessTable)
 print("getBestFitness",getBestFitness(fitnessTable))
 print("summ(fitnessTable)",summ(fitnessTable))
+
+local t1={1,0}
+local o1={0,1}
+local layout = {2,2,2}
+simulateNN({t1,o1},layout)
+
+
+
+local layout = {35,35,10}
+simulateNN(traningVector[1],layout)
+
 local layout = {35,35,10}
 simulateNN(traningVector[1],layout)
