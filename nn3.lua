@@ -17,10 +17,19 @@ function calcNeuron(neuron, inp)
 	return sigmoid(a)
 end
 
-function calcLayer(layer, input)
+function calcLayer(layer, inp)
 	local o={}
 	for k,n in ipairs(layer) do
-		o[k]=calcNeuron()
+		o[k]=calcNeuron(n,inp)
+	end
+	return o
+end
+
+function calcNN(nn, inp)
+	local o=nil
+	for _,n in ipairs(nn) do
+		o=calcLayer(n,inp)
+		inp = o
 	end
 	return o
 end
