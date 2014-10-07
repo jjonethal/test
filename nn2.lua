@@ -54,39 +54,43 @@ end
 -- @param input the input array {i1 ... iN}
 -- @param neuron then neuron weights { w1 ... wN+1 } wN+1 is the activation bias of the neuron
 -- @return the activation value for the neuron
-function calculateActivation(input, neuron)
+function calculateActivation(inp, neuron)
 	local activation = 0
-	for i = 1, #input do
-		activation = activation + input[i]*neuron[i]
+	for i = 1, #inp do
+		activation = activation + inp[i]*neuron[i]
+--		print("i,inp[i],neuron[i]", i, inp[i], neuron[i])
 	end
 	activation = activation + BIAS * neuron[#neuron]
 	return sigmoid(activation)
 end
 --- calculate the activation values for a complete neuron layer
--- @param input the input vector of the layer
+-- @param inp the input vector of the layer
 -- @param layer the table with neurons. each neuron must have 
-function calculateLayer(input, layer, output)
-	output = output or {}
+function calculateLayer(inp, layer, outp)
+	outp = outp or {}
 	for i = 1, #layer do
 		local neuron = layer[i]
-		output[i] = calculateActivation(input, neuron)
+		outp[i] = calculateActivation(inp, neuron)
+--		io.write(string.format("lay%d: %6.4f ",i,outp[i]))
 	end
-	output[#layer + 1] = nil
-	return output
+--	print()
+	outp[#layer + 1] = nil
+	return outp
 end
 
 --- calculate nn answer from input
 -- @param input input vector
 -- @param network the neural network to calculate answer from
 -- @return output vector fom neural network
-function calculateNetwork(input, network)
+function calculateNetwork(inp, network)
 	-- print("calculateNetwork",input,network)
+	local outp
 	for i = 1, #network do
 		local layer = network[i]
-		output = calculateLayer(input, layer)
-		input  = output
+		outp = calculateLayer(inp, layer)
+		input  = outp
 	end
-	return output
+	return outp
 end
 
 function dump(t)
@@ -126,6 +130,7 @@ function putGenom(nn,gen)
 			local neuron = layer[j]
 			for i=1,#neuron do
 				neuron[i] = gen[g]
+				g = g + 1
 			end
 		end
 	end
@@ -135,12 +140,13 @@ end
 -- @param output the actual result
 -- @param expectedOutput the expected result
 -- @return the absolute error
-function error(output, expectedOutput)
+function err(outp, expectedOutput)
 	local e = 0
-	for i=1,#output do
-		e = e + math.abs(output[i]-expectedOutput[i])
+	for i=1,#outp do
+		e = e + math.abs(outp[i]-expectedOutput[i])
+--		print("error",e,i)
 	end
-	print("error",e)
+--	print("error",e)
 	return e
 end
 
@@ -150,9 +156,9 @@ end
 -- @param input the inputvector to neural net
 -- @param expectedOutput the expected output to be compared with output from neural net
 function fitness(nn,input,expectedOutput)
-	local output = calculateNetwork(input, nn)
-	local e = error(output, expectedOutput)
-	return 1/e
+	local out = calculateNetwork(input, nn)
+	local e = err(out, expectedOutput)
+	return 1.0/e
 end
 
 --- create genom set for neural net. initialize genome with random values
@@ -184,6 +190,7 @@ function generationFittness(genoms,nn,input,expectedOutput,fitnessTable)
 		putGenom(nn,gen)
 		fitnessTable[i]=fitness(nn,input,expectedOutput)
 	end
+	fitnessTable[numGenoms+1]=nil
 	return fitnessTable
 end
 
@@ -201,6 +208,22 @@ function getBestFitness(fitnessTable)
 	end
 	return max,maxIdx,min,minIdx
 end
+
+
+--- some statistics check for min/max
+--  @param fitnessTable the table with values to be checked
+--  @return max, idx of max, min, idx of min
+function getMaxMin(t)
+	local min   ,max    = t[1],t[1]
+	local minIdx,maxIdx = 1,   1
+	for i=1,#t do
+		local f = t[i]
+		if min > f then min = f minIdx=i end
+		if max < f then max = f maxIdx=i end
+	end
+	return max,maxIdx,min,minIdx
+end
+
 
 --- summ all values together
 --  @param fitnessTable
@@ -230,6 +253,39 @@ function grabGenomForMate(fitnessTable, sum)
 	end
 	return idx
 end
+
+
+function calcMaxMinSum(t,maxMinSum)
+	local mms = maxMinSum or {}
+	local max,maxIdx,min,minIdx = getMaxMin(t)
+	local summ = 0
+	for _,v in ipairs(t) do
+		summ = summ + v-min
+	end
+	mms[1],mms[2],mms[3],mms[4],mms[5]=max,maxIdx,min,minIdx,summ
+	return mms
+end
+
+--- getting index for random genom for mating probability depends on fitness
+--  @param t fitnessTable table containing fitness values of all genoms
+--  @param sum precomputed sum of all fitness values
+function grabGenomForMateMaxMinSum(t, maxMinSum)
+	local mms=maxMinSum or calcMaxMinSum(t,maxMinSum)
+	local sum = mms[5]
+	local min = mms[3]
+	local rand = random()*sum
+	local idx=1
+	local s=0
+	for i=1,#t do
+		s = s + t[i]-min
+		if(rand<s) then
+			idx = i
+			break
+		end
+	end
+	return idx
+end
+
 
 --- copy vector 1 to vector 2 reusing vector 2
 --  @param v1 source vector to be copied
@@ -277,6 +333,7 @@ end
 function nextGen(genoms, fitnessTable, newGen)
 	newGen       = newGen or {}
 	local sum    = summ(fitnessTable)
+	local minmax = { getBestFitness(fitnessTable) }
 	local nexIdx = 1
 	for i = 1, math.floor(#genoms/2.0 + 0.5) do
 		local maleIdx    = grabGenomForMate(fitnessTable, sum)
@@ -293,6 +350,34 @@ function nextGen(genoms, fitnessTable, newGen)
 	end
 	return newGen
 end
+
+--- create a next generation
+--  @param genoms the genomes of the population
+--  @param fitnessTable contains all fitness values of the population
+--  @param newGen the table that will contain the genoms of new generation
+--  @return the new table
+
+function nextGenMaxMin(genoms, fitnessTable, newGen)
+	newGen       = newGen or {}
+	local mms    = calcMaxMinSum(fitnessTable,maxMinSum)
+	local nexIdx = 1
+	for i = 1, math.floor(#genoms/2.0 + 0.5) do
+		local maleIdx    = grabGenomForMateMaxMinSum(fitnessTable, mms)
+		local femaleIdx  = grabGenomForMateMaxMinSum(fitnessTable, mms)
+--		print("nextGen",maleIdx, femaleIdx)
+		local male       = copyVector(genoms[maleIdx],  newGen[nexIdx]  )
+		local female     = copyVector(genoms[femaleIdx],newGen[nexIdx+1])
+		crossover(male,female)
+		mutate(male)
+		mutate(female)
+		newGen[nexIdx]   = male
+		newGen[nexIdx+1] = female
+		nexIdx           = nexIdx + 2
+	end
+	return newGen
+end
+
+
 
 function dumpOutput(o)
 	local t = {}
@@ -321,12 +406,14 @@ function evolution(trainingData, nn, genoms, newGen)
 	local inputData      = trainingData[1]
 	local expectedOutput = trainingData[2]
 	local fitnessTable   = generationFittness(genoms,nn,inputData,expectedOutput)
-	print("fitnessTable",table.concat(fitnessTable," "))
-	local max,maxIdx,min,minIdx = getBestFitness(fitnessTable)
+--	print("fitnessTable",table.concat(fitnessTable," "))
+	local max,maxIdx,min,minIdx = getMaxMin(fitnessTable)
 	putGenom(nn,genoms[maxIdx])
 	local output = calculateNetwork(inputData, nn)
 	print(string.format("%5d %9.3f %4d %9.3f %4d",generation, max or 0,maxIdx or 0,min or 0,minIdx or 0),dumpOutput(output))
 	newGen = nextGen(genoms, fitnessTable, newGen)
+--	newGen = nextGenMaxMin(genoms, fitnessTable, newGen)
+	
 	return newGen
 end
 
@@ -337,7 +424,7 @@ function simulateNN(trainingData,layout)
 	local genoms = initGenoms(nn)
 	local newGen = nil
 	while(true) do
-		printGenom(genoms)
+--		printGenom(genoms)
 		newGen = evolution(trainingData, nn, genoms, newGen)
 		local oldgen = genoms
 		genoms = newGen
@@ -377,6 +464,7 @@ local inputData = input_1a
 
 
 local expectedOutput = {0,1,0,0,0,0,0,0,0,0}
+--[[
 local o = calculateNetwork(inputData, nn)
 dump(o)
 print("fitness",fitness(nn,inputData,expectedOutput))
@@ -385,10 +473,10 @@ print("#genoms",#genoms)
 local fitnessTable = generationFittness(genoms,nn,inputData,expectedOutput,fitnessTable)
 print("getBestFitness",getBestFitness(fitnessTable))
 print("summ(fitnessTable)",summ(fitnessTable))
-
+]]
 local t1={1,0}
 local o1={0,1}
-local layout = {2,2,2}
+local layout = {2,2}
 simulateNN({t1,o1},layout)
 
 
@@ -398,3 +486,4 @@ simulateNN(traningVector[1],layout)
 
 local layout = {35,35,10}
 simulateNN(traningVector[1],layout)
+
