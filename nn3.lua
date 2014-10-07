@@ -153,28 +153,80 @@ function dumpNN(nn)
 	end
 end
 
---- dump a neural net
---  @param the neural net
-function dumpNNStream(nn)
-	local t={"return {"}
-	for l,layer in ipairs(nn) do
-		t[#t+1] = "layer:%2d\n", l) -- print layer number
-		for n,neuron in ipairs(layer) do
-			printf("  n:%2d ", n)
-			for _,w in ipairs(neuron) do
-				printf("%7.4f ", w)
-			end
-			printf("\n") -- end of neuron
-		end
-	end
+--- format a table with fmt and separator
+--  @param t table to be formated
+--  @param fmt format is string.format for each table entry
+--  @param sep table separator
+function tableFormat(t,fmt,sep)
+	return string.format(string.rep(fmt,#t>0 and 1 or 0) .. string.rep(sep..fmt,#t-1),unpack(t))
 end
 
+--- dump a neural net to a string
+--  @param the neural net
+function dumpNNString(nn)
+	local t={"return {"}
+	for l,layer in ipairs(nn) do
+		t[#t+1] = "  {" -- print layer number
+		for n,neuron in ipairs(layer) do
+			t[#t+1]="    { " .. tableFormat(neuron,"%.18E",", ") .. "},"
+		end
+		t[#t+1] = "  }," -- layer end number
+	end
+	t[#t+1] = "}"
+	return table.concat(t,"\n")
+end
 
-function testGenerateNet()
+function extractWeights(nn, ww)
+	local ww = ww or {}
+	clear(ww)
+	for l,layer in ipairs(nn) do
+		for n,neuron in ipairs(layer) do
+			for _,w in ipairs(neuron) do
+				ww[#ww+1=w]
+			end
+		end
+	end
+	return ww
+end
+
+function test_generateNet()
 	local layout = {2,2,2}
 	local nn = generateNet(layout,function() return 1 end)
 	dumpNN(nn)
 end
+
+function compareNN(nn1, nn2)
+	for l,layer in ipairs(nn1) do
+		printf("layer:%2d\n", l) -- print layer number
+		for n,neuron in ipairs(layer) do
+			printf("  n:%2d ", n)
+			for i,w in ipairs(neuron) do
+				local wnn2 = nn2[l][n][i]
+				local err = math.abs((wnn2-w)/wnn2)
+				local ok = err < 1.0e-13
+				printf("%7.4f ~ %7.4f : %s err: %E ", w, wnn2, ok, err)
+				if not ok then
+					return false
+				end
+			end
+			printf("\n") -- end of neuron
+		end
+	end
+	return true
+end
+
+
+function test_dumpNNStream()
+	local layout = {2,2,2}
+	local nn = generateNet(layout)
+	local src = dumpNNString(nn)
+	print(src)
+	local nn2=loadstring(src)()
+	local ok = compareNN(nn, nn2)
+	print("result",ok)
+end
+
 -- testCalcNeuron()
 testCalcNN()
-testGenerateNet()
+test_generateNet()
+test_dumpNNStream()
