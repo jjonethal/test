@@ -43,8 +43,8 @@ function copy(t1)
 end
 
 function testCalcNeuron()
-	local inp    = {0.1,.1,.1,.1}
-	local neuron = {1,   1,  1,  1,  1}
+	local inp    = {0.1,0.1,0.1,0.1}
+	local neuron = {1.0,1.0,1.0,1.0,1.0}
 	print("calcNeuron",calcNeuron(neuron, inp))
 end
 
