@@ -33,8 +33,10 @@ end
 
 
 --- calculate neural net
---  @param inp input vector to nn
 --  @param nn the neural net to be computed
+--  @param inp input vector to nn
+--  @param out optional reusable output vector
+--  @return the output of the neural network
 function calcNN(nn, inp, out)
 	local i = copy(inp,out)
 	local o = {}
