@@ -53,6 +53,8 @@ function compareImages(img1, img2)
 	
 end
 
+--- get a prixel from image wrapping around
+
 function getPrixelWrap(img,x,y)
 	while x > img.w do x = x - img.w end      -- wrap x from right to left
 	while x < 0     do x = x + img.w end      -- wrap x from left to right
@@ -60,6 +62,17 @@ function getPrixelWrap(img,x,y)
 	while y < 0     do y = y + img.h end      -- wrap y from low to high
 	return img[y][x]
 end
+
+--- get a prixel from image wrapping around
+
+function getPrixelClip(img,x,y)
+	while x > img.w do x = img.w end      -- wrap x from right to left
+	while x < 0     do x = 0     end      -- wrap x from left to right
+	while y > img.h do y = img.h end      -- wrap y from high to low
+	while y < 0     do y = 0     end      -- wrap y from low to high
+	return img[y][x]
+end
+
 
 function diffImage(img1, img2)
 	local img3={w=img1.w,h=img1.h,}
