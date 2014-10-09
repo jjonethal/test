@@ -84,3 +84,27 @@ function diffImage(img1, img2)
 	end
 	return img3
 end
+
+
+--[[
+objectives 
+onLowBattery:
+	destination = nextCharger
+	motionMode  = mostEfficientMotion
+	travelToDestination
+onBatteryFull:
+	- stopCharging
+	- exploreEnvironment
+exploreEnvironment
+	explore moving objects
+
+Actor.set(value)
+Actor.inputType(boolean, integer(a..b), float(a..b), double(a..b))
+Actor.range.min	
+Actor.range.max
+Actor.unit
+Actor.off
+
+selfCalibration
+	turnOffActors()
+]]
