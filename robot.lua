@@ -84,7 +84,52 @@ function diffImage(img1, img2)
 	end
 	return img3
 end
+--[[
++-+-+-+-+-+-+-+-+-+-+-+-+
+| | | | | | | | | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+
+| | | | | | | | | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+
+| | | | | | | | | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+
+| | | | |*|*| | | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+
+| | | |*| | |*| | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+
+| | | | |*|*| | | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+
+| | | | | | | | | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+
+| | | | | | | | | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+
+| | | | | | | | | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+
+]]
 
+function diffPattern(img,pat,xo,yo)
+	local ymax = img.h - pat.h -- maximum vertical area to be computed 
+	local xmax = img.w - pat.w -- maximum horozontal are to be computed
+	local diffSum = 0
+	for y = 1, pat.h do
+		for x = 1, pat.w do
+			local d = math.abs(pat[y][x]-img[y+yo][x+xo])
+			diffSum = diffSum + d
+		end
+	end
+	return diffSum
+end
+
+function findPattern(img,pat)
+	-- pattern must be located on image completly
+	local ymax = img.h - pat.h -- maximum vertical area to be computed 
+	local xmax = img.w - pat.w -- maximum horozontal are to be computed
+	local c={}
+	for yo=0,ymax do
+		for xo=0,xmax do
+			c[yo][xo]=diffPattern(img,pat,xo,yo)
+		end
+	end
+end
 
 --[[
 objectives 
